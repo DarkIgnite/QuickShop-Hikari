@@ -22,10 +22,7 @@ import com.ghostchu.quickshop.api.QuickShopAPI;
 import com.ghostchu.quickshop.api.localization.text.ProxiedLocale;
 import com.ghostchu.quickshop.api.shop.ControlComponent;
 import com.ghostchu.quickshop.api.shop.Shop;
-import com.ghostchu.quickshop.util.MsgUtil;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.event.ClickEvent;
-import net.kyori.adventure.text.event.HoverEvent;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
@@ -75,20 +72,6 @@ public class OwnerComponent implements ControlComponent {
 
     final ProxiedLocale locale = ((QuickShop)plugin).text().findRelativeLanguages(sender.getLocale());
 
-    if(!((QuickShop)plugin).perm().hasPermission(sender, "quickshop.setowner")) {
-
-      return ((QuickShop)plugin).text().of(sender, "menu.owner", shop.ownerName(locale)).forLocale();
-    } else {
-
-      final Component text;
-      if(((QuickShop)plugin).getConfig().getBoolean("shop.show-owner-uuid-in-controlpanel-if-op") && shop.isUnlimited()) {
-        text = ((QuickShop)plugin).text().of(sender, "controlpanel.setowner-uuid", shop.ownerName(locale), shop.getOwner().toString()).forLocale();
-      } else {
-        text = ((QuickShop)plugin).text().of(sender, "controlpanel.setowner", shop.ownerName(locale)).forLocale();
-      }
-
-      return text.hoverEvent(HoverEvent.showText(((QuickShop)plugin).text().of(sender, "controlpanel.setowner-hover").forLocale()))
-              .clickEvent(ClickEvent.suggestCommand(MsgUtil.fillArgs("/{0} {1} ", ((QuickShop)plugin).getMainCommand(), ((QuickShop)plugin).getCommandPrefix("transferownership"))));
-    }
+    return ((QuickShop)plugin).text().of(sender, "menu.owner", shop.ownerName(locale)).forLocale();
   }
 }

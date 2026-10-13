@@ -21,7 +21,7 @@ softdepend:
   - FastAsyncWorldEdit
   - BarrelShops
   - Nexo
-api-version: '1.20'
+api-version: '1.21'
 # TODO: https://github.com/PaperMC/Paper/pull/7177
 #libraries:
 #  - org.apache.commons:commons-compress:1.25.0
@@ -157,8 +157,6 @@ permissions:
       quickshop.tag.tagged: true
       quickshop.tag.tagged.teleport: true
       quickshop.toggledisplay: true
-      quickshop.transferall: true
-      quickshop.transferownership: true
       quickshop.use: true
       quickshop.watch: true
       quickshop.watch.list: true
@@ -168,7 +166,6 @@ permissions:
     children:
       quickshop.tag.clear: true
       quickshop.tag.clearall: true
-      quickshop.setowner: true
       quickshop.other.destroy: true
       quickshop.other.open: true
       quickshop.other.price: true
@@ -176,7 +173,6 @@ permissions:
       quickshop.alerts: true
       quickshop.create.admin: true
       quickshop.history.*: true
-      quickshop.transferownership.other: true
       quickshop.other.changeitem: true
       quickshop.other.changeamount: true
       quickshop.other.staff: true
@@ -184,7 +180,6 @@ permissions:
       quickshop.other.taxaccount: true
       quickshop.other.toggledisplay: true
       quickshop.purge: true
-      quickshop.other.setowner: true
       quickshop.taxaccount: true
       quickshop.toggledisplayall.admin: true
       quickshop.other.shopnaming: true
@@ -251,9 +246,6 @@ permissions:
     default: op
   quickshop.other.sign:
     description: Allows a staff member to change the sign type of someone else's shop.
-    default: op
-  quickshop.setowner:
-    description: Allows a staff member to change the owner of any shop.
     default: op
   quickshop.staff:
     description: Allows a shop owner to manage their shop staff.
@@ -384,18 +376,6 @@ permissions:
   quickshop.browse.teleport:
     description: Permission to teleport to shops from the browse GUI
     default: true
-  quickshop.transferall:
-    description: Permission to transfer all shops of a player to someone
-    default: op
-  quickshop.transferall.other:
-    description: Permission to transfer others all shops of a player to someone
-    default: op
-  quickshop.transferownership:
-    description: Permission to transfer a single shop of a player to someone
-    default: op
-  quickshop.transferownership.other:
-    description: Permission to transfer a single shop of a player to someone without permission check
-    default: op
   quickshop.sign:
     description: Permission to change the shop sign type
     default: op

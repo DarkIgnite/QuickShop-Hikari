@@ -2,8 +2,8 @@ rootProject.name = "quickshop-hikari"
 
 pluginManagement {
     repositories {
-        gradlePluginPortal()
         mavenCentral()
+        gradlePluginPortal()
     }
     includeBuild("build-logic")
 }

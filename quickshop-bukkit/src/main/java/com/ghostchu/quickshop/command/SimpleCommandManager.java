@@ -41,7 +41,6 @@ import com.ghostchu.quickshop.command.subcommand.SubCommand_RemoveAll;
 import com.ghostchu.quickshop.command.subcommand.SubCommand_RemoveWorld;
 import com.ghostchu.quickshop.command.subcommand.SubCommand_Reset;
 import com.ghostchu.quickshop.command.subcommand.SubCommand_Sell;
-import com.ghostchu.quickshop.command.subcommand.SubCommand_SetOwner;
 import com.ghostchu.quickshop.command.subcommand.SubCommand_Sign;
 import com.ghostchu.quickshop.command.subcommand.SubCommand_Size;
 import com.ghostchu.quickshop.command.subcommand.SubCommand_Staff;
@@ -52,8 +51,6 @@ import com.ghostchu.quickshop.command.subcommand.SubCommand_Tag;
 import com.ghostchu.quickshop.command.subcommand.SubCommand_TaxAccount;
 import com.ghostchu.quickshop.command.subcommand.SubCommand_ToggleDisplay;
 import com.ghostchu.quickshop.command.subcommand.SubCommand_ToggleDisplayAll;
-import com.ghostchu.quickshop.command.subcommand.SubCommand_TransferAll;
-import com.ghostchu.quickshop.command.subcommand.SubCommand_TransferOwnership;
 import com.ghostchu.quickshop.command.subcommand.SubCommand_Unlimited;
 import com.ghostchu.quickshop.command.subcommand.SubCommand_Watch;
 import com.ghostchu.quickshop.command.subcommand.silent.SubCommand_SilentBuy;
@@ -112,7 +109,6 @@ public class SimpleCommandManager implements CommandManager, TabCompleter, Comma
           "quickshop.moderator",
           "quickshop.tag.clear",
           "quickshop.tag.clearall",
-          "quickshop.setowner",
           "quickshop.setuppermission",
           "quickshop.other.destroy",
           "quickshop.other.open",
@@ -121,7 +117,6 @@ public class SimpleCommandManager implements CommandManager, TabCompleter, Comma
           "quickshop.alerts",
           "quickshop.create.admin",
           "quickshop.history.*",
-          "quickshop.transferownership.other",
           "quickshop.other.changeitem",
           "quickshop.other.changeamount",
           "quickshop.other.staff",
@@ -129,7 +124,6 @@ public class SimpleCommandManager implements CommandManager, TabCompleter, Comma
           "quickshop.other.taxaccount",
           "quickshop.other.toggledisplay",
           "quickshop.purge",
-          "quickshop.other.setowner",
           "quickshop.taxaccount",
           "quickshop.toggledisplayall.admin",
           "quickshop.other.shopnaming",
@@ -170,31 +164,7 @@ public class SimpleCommandManager implements CommandManager, TabCompleter, Comma
                     .permission("quickshop.unlimited")
                     .executor(new SubCommand_SilentUnlimited(plugin))
                     .build());
-    registerCmd(
-            CommandContainer.builder()
-                    .prefix("transferall")
-                    .permission("quickshop.transferall")
-                    .executor(new SubCommand_TransferAll(plugin))
-                    .build());
-    registerCmd(
-            CommandContainer.builder()
-                    .prefix("transferownership")
-                    .permission("quickshop.transferownership")
-                    .executor(new SubCommand_TransferOwnership(plugin))
-                    .build());
-    registerCmd(
-            CommandContainer.builder()
-                    .prefix("setowner")
-                    .permission("quickshop.setowner")
-                    .executor(new SubCommand_SetOwner(plugin))
-                    .build());
-    registerCmd(
-            CommandContainer.builder()
-                    .prefix("owner")
-                    .hidden(true)
-                    .permission("quickshop.setowner")
-                    .executor(new SubCommand_SetOwner(plugin))
-                    .build());
+
 
     registerCmd(
             CommandContainer.builder()

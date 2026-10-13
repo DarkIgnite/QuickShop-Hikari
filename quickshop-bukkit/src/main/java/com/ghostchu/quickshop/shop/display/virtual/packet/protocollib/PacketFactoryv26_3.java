@@ -23,6 +23,7 @@ import com.comphenix.protocol.events.ListenerPriority;
 import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
+import com.comphenix.protocol.reflect.StructureModifier;
 import com.comphenix.protocol.utility.MinecraftReflection;
 import com.comphenix.protocol.wrappers.ChunkCoordIntPair;
 import com.comphenix.protocol.wrappers.WrappedChatComponent;
@@ -209,8 +210,13 @@ public class PacketFactoryv26_3 implements PacketFactory<PacketContainer> {
         if(player == null || !player.isOnline() || player.getClass().getName().contains("TemporaryPlayer")) {
           return;
         }
-        final ChunkCoordIntPair pair = event.getPacket().getChunkCoordIntPairs().read(0);
-        VirtualDisplayItemManager.instance().chunksMapping().computeIfPresent(new SimpleShopChunk(player.getWorld().getName(), pair.getChunkX(), pair.getChunkZ()), (chunkLoc, targetList)->{
+        final int[] coords = extractChunkCoords(event);
+        if(coords == null) {
+          return;
+        }
+        final int chunkX = coords[0];
+        final int chunkZ = coords[1];
+        VirtualDisplayItemManager.instance().chunksMapping().computeIfPresent(new SimpleShopChunk(player.getWorld().getName(), chunkX, chunkZ), (chunkLoc, targetList)->{
           for(final VirtualDisplayItem<?> target : targetList.values()) {
             if(target.isSpawned() && target.isApplicableForPlayer(player)) {
               target.getPacketSenders().add(player.getUniqueId());
@@ -224,6 +230,27 @@ public class PacketFactoryv26_3 implements PacketFactory<PacketContainer> {
     };
   }
 
+  private int[] extractChunkCoords(final PacketEvent event) {
+    try {
+      final StructureModifier<ChunkCoordIntPair> chunkCoord = event.getPacket().getChunkCoordIntPairs();
+      if(chunkCoord != null && chunkCoord.size() > 0) {
+        final ChunkCoordIntPair pair = chunkCoord.read(0);
+        if(pair != null) {
+          return new int[] {pair.getChunkX(), pair.getChunkZ()};
+        }
+      }
+    } catch (Exception ignored) {
+    }
+    try {
+      final StructureModifier<Integer> integers = event.getPacket().getIntegers();
+      if(integers != null && integers.size() >= 2) {
+        return new int[] {integers.read(0), integers.read(1)};
+      }
+    } catch (Exception ignored) {
+    }
+    return null;
+  }
+
   private PacketAdapter createUnloadChunkPacketAdapter() {
 
     return new PacketAdapter(QuickShop.getInstance().getJavaPlugin(), ListenerPriority.HIGH, PacketType.Play.Server.UNLOAD_CHUNK) {
@@ -234,8 +261,13 @@ public class PacketFactoryv26_3 implements PacketFactory<PacketContainer> {
         if(player == null || !player.isOnline() || player.getClass().getName().contains("TemporaryPlayer")) {
           return;
         }
-        final ChunkCoordIntPair pair = event.getPacket().getChunkCoordIntPairs().read(0);
-        VirtualDisplayItemManager.instance().chunksMapping().computeIfPresent(new SimpleShopChunk(player.getWorld().getName(), pair.getChunkX(), pair.getChunkZ()), (chunkLoc, targetList)->{
+        final int[] coords = extractChunkCoords(event);
+        if(coords == null) {
+          return;
+        }
+        final int chunkX = coords[0];
+        final int chunkZ = coords[1];
+        VirtualDisplayItemManager.instance().chunksMapping().computeIfPresent(new SimpleShopChunk(player.getWorld().getName(), chunkX, chunkZ), (chunkLoc, targetList)->{
           for(final VirtualDisplayItem<?> target : targetList.values()) {
             if(target.isSpawned()) {
               target.sendDestroyPacket(player);
