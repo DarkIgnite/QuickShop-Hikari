@@ -76,7 +76,7 @@ shop-tax:
   account: tax
 
   # Show tax details in transaction messages.
-  show: false
+  show: true
 
   # Disable taxes for unlimited shops.
   disable-for-unlimited-shop: false

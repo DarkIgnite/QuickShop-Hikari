@@ -88,6 +88,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -224,7 +226,7 @@ public class SimpleShopManager extends AbstractShopManager implements ShopManage
     this.useDecFormat = plugin.getConfig().getBoolean("use-decimal-format");
     this.shopCreateCost = plugin.getConfig().getDouble("shop.cost");
     this.useShopLock = plugin.getConfig().getBoolean("shop.lock");
-    this.showTax = plugin.getConfig().getBoolean("shop-tax.show");
+    this.showTax = plugin.getConfig().getBoolean("shop-tax.show", true);
     this.payUnlimitedShopOwner = plugin.getConfig().getBoolean("shop.pay-unlimited-shop-owners");
     this.tradeAllKeyword = plugin.getConfig().getString("shop.word-for-trade-all-items", "all");
     this.disableCreativePurchase = plugin.getConfig().getBoolean("shop.disable-creative-mode-trading");
@@ -485,16 +487,27 @@ public class SimpleShopManager extends AbstractShopManager implements ShopManage
     sendSellSuccess(buyerQUser, shop, amount, total, transaction.toTax().doubleValue());
     new ShopSuccessPurchaseEvent(shop, buyerQUser, buyerInventory, amount, total, transaction.toTax().doubleValue()).callEvent();
     shop.setSignText(plugin.text().findRelativeLanguages(buyer)); // Update the signs count
-    notifySold(buyerQUser, shop, amount, total, space);
+    notifySold(buyerQUser, shop, amount, space, transaction);
     return true;
   }
 
-  private void notifySold(@NotNull final QUser buyerQUser, @NotNull final Shop shop, final int amount, final double total, final int space) {
+  private void notifySold(@NotNull final QUser buyerQUser, @NotNull final Shop shop, final int amount, final int space, @NotNull final QSEconomyTransaction transaction) {
 
     Util.asyncThreadRun(()->{
       final List<Function<String, Component>> sendList = new ArrayList<>();
       final String date = dateTimeFormatter.format(LocalDateTime.now());
-      final Function<String, Component> notify = langCode->plugin.platform().setItemStackHoverEvent(plugin.text().of("player-sold-to-your-store", buyerQUser.getDisplay(), amount, Util.getItemStackName(shop.getItem()), format(total, shop), date).forLocale(langCode), shop.getItem());
+      final double total = transaction.amount().doubleValue();
+      final double tax = transaction.fromTax().doubleValue();
+      final Function<String, Component> notify;
+      if(tax > 0) {
+        final double totalPaid = total + tax;
+        final double taxPercent = total > 0 ? (tax / total) * 100.0 : 0.0;
+        final DecimalFormat rateFormat = new DecimalFormat("#.##", DecimalFormatSymbols.getInstance(Locale.ROOT));
+        final String taxRateFormatted = rateFormat.format(taxPercent);
+        notify = langCode->plugin.platform().setItemStackHoverEvent(plugin.text().of("player-sold-to-your-store-tax", buyerQUser.getDisplay(), amount * shop.getItem().getAmount(), Util.getItemStackName(shop.getItem()), this.formatter.format(totalPaid, shop), this.formatter.format(tax, shop), taxRateFormatted, this.formatter.format(total, shop), date).forLocale(langCode), shop.getItem());
+      } else {
+        notify = langCode->plugin.platform().setItemStackHoverEvent(plugin.text().of("player-sold-to-your-store", buyerQUser.getDisplay(), amount * shop.getItem().getAmount(), Util.getItemStackName(shop.getItem()), format(total, shop), date).forLocale(langCode), shop.getItem());
+      }
       sendList.add(notify);
       if(space == amount) {
         Function<String, Component> spaceWarn;
@@ -1061,8 +1074,11 @@ public class SimpleShopManager extends AbstractShopManager implements ShopManage
     final ChatSheetPrinter chatSheetPrinter = new ChatSheetPrinter(purchaser);
     chatSheetPrinter.printHeader();
     chatSheetPrinter.printLine(plugin.text().of(purchaser, "menu.successful-purchase").forLocale());
-    if(showTax) {
-      chatSheetPrinter.printLine(plugin.text().of(purchaser, "menu.item-name-and-price-tax", Component.text(amount * shop.getItem().getAmount()), Util.getItemStackName(shop.getItem()), format(total, shop), format(tax, shop)).forLocale());
+    if(tax > 0) {
+      final double taxPercent = total > 0 ? (tax / total) * 100.0 : 0.0;
+      final DecimalFormat rateFormat = new DecimalFormat("#.##", DecimalFormatSymbols.getInstance(Locale.ROOT));
+      final String taxRateFormatted = rateFormat.format(taxPercent);
+      chatSheetPrinter.printLine(plugin.text().of(purchaser, "menu.item-name-and-price-tax", Component.text(amount * shop.getItem().getAmount()), Util.getItemStackName(shop.getItem()), format(total, shop), format(tax, shop), taxRateFormatted, format(total + tax, shop)).forLocale());
     } else {
       chatSheetPrinter.printLine(plugin.text().of(purchaser, "menu.item-name-and-price", Component.text(amount * shop.getItem().getAmount()), Util.getItemStackName(shop.getItem()), format(total, shop)).forLocale());
     }
@@ -1084,13 +1100,15 @@ public class SimpleShopManager extends AbstractShopManager implements ShopManage
     chatSheetPrinter.printHeader();
     chatSheetPrinter.printLine(plugin.text().of(seller, "menu.successfully-sold").forLocale());
     chatSheetPrinter.printLine(plugin.text().of(seller, "menu.item-name-and-price", amount, Util.getItemStackName(shop.getItem()), format(total, shop)).forLocale());
-    if(showTax) {
-      if(tax != 0) {
-        if(!seller.equals(shop.getOwner())) {
-          chatSheetPrinter.printLine(plugin.text().of(seller, "menu.sell-tax", format(tax, shop)).forLocale());
-        } else {
-          chatSheetPrinter.printLine(plugin.text().of(seller, "menu.sell-tax-self").forLocale());
-        }
+    if(tax != 0) {
+      if(!seller.equals(shop.getOwner())) {
+        final double taxPercent = total > 0 ? (tax / total) * 100.0 : 0.0;
+        final DecimalFormat rateFormat = new DecimalFormat("#.##", DecimalFormatSymbols.getInstance(Locale.ROOT));
+        final String taxRateFormatted = rateFormat.format(taxPercent);
+        final double net = total - tax;
+        chatSheetPrinter.printLine(plugin.text().of(seller, "menu.sell-tax", format(tax, shop), taxRateFormatted, format(net, shop), format(total, shop)).forLocale());
+      } else {
+        chatSheetPrinter.printLine(plugin.text().of(seller, "menu.sell-tax-self").forLocale());
       }
     }
     MsgUtil.printEnchantment(shop, chatSheetPrinter);
@@ -1269,10 +1287,14 @@ public class SimpleShopManager extends AbstractShopManager implements ShopManage
       final List<Function<String, Component>> sendList = new ArrayList<>();
       final String date = dateTimeFormatter.format(LocalDateTime.now());
       Function<String, Component> notify;
+      final double total = transaction.amount().doubleValue();
       final double ownerPayment = transaction.ownerPayment().doubleValue();
       final double tax = transaction.toTax().doubleValue();
-      if(showTax) {
-        notify = langCode->plugin.text().of("player-bought-from-your-store-tax", seller, amount * shop.getItem().getAmount(), Util.getItemStackName(shop.getItem()), this.formatter.format(ownerPayment, shop), this.formatter.format(tax, shop), date).forLocale(langCode);
+      if(tax > 0) {
+        final double taxPercent = total > 0 ? (tax / total) * 100.0 : 0.0;
+        final DecimalFormat rateFormat = new DecimalFormat("#.##", DecimalFormatSymbols.getInstance(Locale.ROOT));
+        final String taxRateFormatted = rateFormat.format(taxPercent);
+        notify = langCode->plugin.text().of("player-bought-from-your-store-tax", seller, amount * shop.getItem().getAmount(), Util.getItemStackName(shop.getItem()), this.formatter.format(ownerPayment, shop), this.formatter.format(tax, shop), taxRateFormatted, this.formatter.format(total, shop), date).forLocale(langCode);
       } else {
         notify = langCode->plugin.text().of("player-bought-from-your-store", seller, amount * shop.getItem().getAmount(), Util.getItemStackName(shop.getItem()), this.formatter.format(ownerPayment, shop), date).forLocale(langCode);
       }
